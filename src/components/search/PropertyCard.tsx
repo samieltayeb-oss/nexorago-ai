@@ -16,6 +16,10 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
+  TrendingUp,
+  Map,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 
 interface PropertyCardProps {
