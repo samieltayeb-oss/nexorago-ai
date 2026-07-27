@@ -61,11 +61,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     <div className="bg-[#111111] rounded-3xl border border-[#C49A10]/20 shadow-nexora hover:border-[#C49A10]/50 transition-all duration-300 overflow-hidden flex flex-col lg:flex-row group text-[#F2EDE4]">
       {/* Image & Badges Column */}
       <div className="relative w-full lg:w-80 h-64 lg:h-auto shrink-0 bg-[#080808] overflow-hidden">
-        <Image
+        <img
           src={property.images[0] || "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80"}
           alt={property.propertyName}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-[#080808]/40" />
 
@@ -210,19 +209,19 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
               )}
             </div>
 
-            {/* Primary CTA → Direct to cheapest OTA */}
+            {/* Primary CTA → Direct to exact Google Hotels link to guarantee price match */}
             <div className="flex flex-col items-end gap-1.5 w-full lg:w-auto shrink-0">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 uppercase tracking-wider px-2">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                Cheapest OTA Verified
+                Exact Price Guaranteed
               </div>
               <a
-                href={property.provider === 'expedia' ? links.expedia : links.bookingCom}
+                href={property.bookingUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-nexora-fill flex items-center justify-center gap-2 w-full lg:w-auto shrink-0 shadow-[0_0_15px_rgba(20,184,166,0.15)] border border-emerald-500/30"
               >
-                <Search className="w-4 h-4" /> Claim Lowest Price on {property.provider === 'expedia' ? 'Expedia' : 'Booking.com'}
+                <Search className="w-4 h-4" /> Claim Exact Price
               </a>
             </div>
           </div>
