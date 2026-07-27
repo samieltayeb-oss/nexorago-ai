@@ -206,15 +206,21 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
               )}
             </div>
 
-            {/* Primary CTA → Direct to OTA to ensure exact dates and guests are pre-filled */}
-            <a
-              href={property.provider === 'expedia' ? links.expedia : links.bookingCom}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-nexora-fill flex items-center justify-center gap-2 w-full lg:w-auto shrink-0"
-            >
-              <Search className="w-4 h-4" /> Check Live Availability on {property.provider === 'expedia' ? 'Expedia' : 'Booking.com'}
-            </a>
+            {/* Primary CTA → Direct to cheapest OTA */}
+            <div className="flex flex-col items-end gap-1.5 w-full lg:w-auto shrink-0">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 uppercase tracking-wider px-2">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Cheapest OTA Verified
+              </div>
+              <a
+                href={property.provider === 'expedia' ? links.expedia : links.bookingCom}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-nexora-fill flex items-center justify-center gap-2 w-full lg:w-auto shrink-0 shadow-[0_0_15px_rgba(20,184,166,0.15)] border border-emerald-500/30"
+              >
+                <Search className="w-4 h-4" /> Claim Lowest Price on {property.provider === 'expedia' ? 'Expedia' : 'Booking.com'}
+              </a>
+            </div>
           </div>
 
           {/* 7-Provider Live Search Bar */}
