@@ -25,8 +25,24 @@ export function generateWorkingProviderLinks(
   checkIn: string = "2026-08-10",
   checkOut: string = "2026-08-13",
   adults: number = 2,
-  children: number = 0
+  children: number = 0,
+  maximumGuests: number = 4
 ): MultiProviderBookingLinks {
+  const totalGuests = adults + children;
+  const roomsNeeded = Math.max(1, Math.ceil(totalGuests / maximumGuests));
+
+  // For Expedia, multiple rooms are handled by repeating the adults/children parameters
+  // e.g. &adults=2&children=3&adults=2&children=3
+  const adultsPerRoom = Math.ceil(adults / roomsNeeded);
+  const childrenPerRoom = Math.ceil(children / roomsNeeded);
+  
+  let expediaRoomParams = "";
+  for (let i = 0; i < roomsNeeded; i++) {
+    expediaRoomParams += `&adults=${adultsPerRoom}`;
+    if (childrenPerRoom > 0) {
+      expediaRoomParams += `&children=${childrenPerRoom}`;
+    }
+  }
   // Use property + destination for targeted searches, destination-only for broad searches
   const propertyQuery = encodeURIComponent(`${propertyName} ${destination}`);
   const destQuery = encodeURIComponent(destination.includes(",") ? destination : `${destination}, Alberta, Canada`);
@@ -35,14 +51,14 @@ export function generateWorkingProviderLinks(
     // Google Travel Hotels — most reliable, aggregates all OTAs
     googleHotels: `https://www.google.com/travel/hotels?q=${propertyQuery}&dates=${checkIn},${checkOut}`,
 
-    // Booking.com — searchresults.html with ss= always works
-    bookingCom: `https://www.booking.com/searchresults.html?ss=${propertyQuery}&checkin=${checkIn}&checkout=${checkOut}&group_adults=${adults}&group_children=${children}&no_rooms=1`,
+    // Booking.com — searchresults.html handles no_rooms automatically and splits the group
+    bookingCom: `https://www.booking.com/searchresults.html?ss=${propertyQuery}&checkin=${checkIn}&checkout=${checkOut}&group_adults=${adults}&group_children=${children}&no_rooms=${roomsNeeded}`,
 
-    // Expedia — /Hotel-Search with destination param
-    expedia: `https://www.expedia.com/Hotel-Search?destination=${destQuery}&startDate=${checkIn}&endDate=${checkOut}&d1=${checkIn}&d2=${checkOut}&adults=${adults}`,
+    // Expedia — /Hotel-Search supports repeated adults/children params for multiple rooms
+    expedia: `https://www.expedia.com/Hotel-Search?destination=${destQuery}&startDate=${checkIn}&endDate=${checkOut}&d1=${checkIn}&d2=${checkOut}${expediaRoomParams}`,
 
-    // Hotels.com — search.do with q-destination param
-    hotelsCom: `https://www.hotels.com/search.do?q-destination=${destQuery}&q-check-in=${checkIn}&q-check-out=${checkOut}&q-rooms=1&q-room-0-adults=${adults}&q-room-0-children=${children}`,
+    // Hotels.com — search.do with q-rooms param
+    hotelsCom: `https://www.hotels.com/search.do?q-destination=${destQuery}&q-check-in=${checkIn}&q-check-out=${checkOut}&q-rooms=${roomsNeeded}&q-room-0-adults=${adults}&q-room-0-children=${children}`,
 
     // Trivago — standard search param
     trivago: `https://www.trivago.ca/?search=${propertyQuery}`,
@@ -513,7 +529,7 @@ export function getMockPropertiesForSearch(
 
   return DEMO_PROPERTIES.map((prop) => {
     const enriched = enrichPropertyWithCosts(prop, nights, adults, children);
-    const links = generateWorkingProviderLinks(prop.propertyName, prop.destination, checkIn, checkOut, adults, children);
+    const links = generateWorkingProviderLinks(prop.propertyName, prop.destination, checkIn, checkOut, adults, children, prop.maximumGuests);
     return {
       ...enriched,
       bookingUrl: links.googleHotels, // Primary CTA → Google Hotels (always works, aggregates all OTAs)

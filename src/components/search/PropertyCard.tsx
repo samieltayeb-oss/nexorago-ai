@@ -51,7 +51,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const children = parseInt(searchParams.get("children") || "0");
 
   const confidenceInfo = getConfidenceBadge(property.priceConfidence);
-  const links = generateWorkingProviderLinks(property.propertyName, property.destination, checkIn, checkOut, adults, children);
+  const links = generateWorkingProviderLinks(property.propertyName, property.destination, checkIn, checkOut, adults, children, property.maximumGuests);
 
   return (
     <div className="bg-[#111111] rounded-3xl border border-[#C49A10]/20 shadow-nexora hover:border-[#C49A10]/50 transition-all duration-300 overflow-hidden flex flex-col lg:flex-row group text-[#F2EDE4]">
