@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getMockPropertiesForSearch } from "@/lib/providers/mockProvider";
 import { scoreAndRankProperties } from "@/lib/engine/rankingEngine";
@@ -41,10 +41,37 @@ function SearchDashboardContent() {
   const [comparedProperties, setComparedProperties] = useState<AccommodationProperty[]>([]);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
 
-  // Retrieve raw properties enriched with costs
-  const rawProperties = useMemo(() => {
-    return getMockPropertiesForSearch(checkIn, checkOut, adults, children);
-  }, [checkIn, checkOut, adults, children]);
+  // Fetch live properties from API
+  const [rawProperties, setRawProperties] = useState<AccommodationProperty[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const params = new URLSearchParams({
+      dests: destsParam,
+      in: checkIn,
+      out: checkOut,
+      adults: adults.toString(),
+      children: children.toString()
+    });
+    
+    fetch(`/api/hotels/search?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setRawProperties(data);
+        } else {
+          console.error("API Error:", data);
+          setRawProperties([]); // Fallback
+        }
+      })
+      .catch((err) => {
+        console.error("Fetch failed:", err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [destsParam, checkIn, checkOut, adults, children]);
 
   // Construct SearchCriteria object for ranking engine
   const searchCriteria: SearchCriteria = useMemo(() => ({
@@ -239,7 +266,16 @@ function SearchDashboardContent() {
       </div>
 
       {/* Main Content Area */}
-      {viewMode === "grid" ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-32 space-y-6">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full border-4 border-slate-200" />
+            <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-gold-500 border-t-transparent animate-spin" />
+            <Sparkles className="w-6 h-6 text-gold-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest animate-pulse">Scanning live inventory across 50+ providers...</p>
+        </div>
+      ) : viewMode === "grid" ? (
         <div className="space-y-6">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
             <span>Showing {rankedProperties.length} verified accommodation option(s)</span>
