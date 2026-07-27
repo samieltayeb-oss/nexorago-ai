@@ -206,14 +206,14 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
               )}
             </div>
 
-            {/* Primary CTA → Google Hotels (guaranteed to work, shows all OTA prices) */}
+            {/* Primary CTA → Direct to OTA to ensure exact dates and guests are pre-filled */}
             <a
-              href={links.googleHotels}
+              href={property.provider === 'expedia' ? links.expedia : links.bookingCom}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-nexora-fill flex items-center justify-center gap-2 w-full lg:w-auto shrink-0"
             >
-              <Search className="w-4 h-4" /> Check Live Availability
+              <Search className="w-4 h-4" /> Check Live Availability on {property.provider === 'expedia' ? 'Expedia' : 'Booking.com'}
             </a>
           </div>
 
