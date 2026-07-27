@@ -21,14 +21,28 @@ export async function GET(request: Request) {
   const primaryDestination = destinations.split(",")[0];
   const q = `hotels in ${primaryDestination}, Alberta`;
 
+  // SerpApi / Google Hotels throws a 400 Bad Request if total travelers > 6.
+  // We must cap the query params, but we will pass the TRUE counts to our cost engine later.
+  const reqAdults = parseInt(adults);
+  const reqChildren = parseInt(children);
+  const queryAdults = Math.min(reqAdults, 6);
+  const queryChildren = Math.min(reqChildren, 6 - queryAdults);
+
   try {
     const url = new URL("https://serpapi.com/search.json");
     url.searchParams.append("engine", "google_hotels");
     url.searchParams.append("q", q);
     url.searchParams.append("check_in_date", checkIn);
     url.searchParams.append("check_out_date", checkOut);
-    url.searchParams.append("adults", adults);
-    url.searchParams.append("children", children);
+    url.searchParams.append("adults", queryAdults.toString());
+    
+    if (queryChildren > 0) {
+      url.searchParams.append("children", queryChildren.toString());
+      // SerpApi requires children_ages if children > 0. We'll default to 10 years old.
+      const ages = Array(queryChildren).fill(10).join(",");
+      url.searchParams.append("children_ages", ages);
+    }
+    
     url.searchParams.append("currency", "CAD");
     url.searchParams.append("gl", "ca");
     url.searchParams.append("hl", "en");
@@ -47,10 +61,10 @@ export async function GET(request: Request) {
     const nights = Math.max(1, Math.ceil((dOut.getTime() - dIn.getTime()) / (1000 * 3600 * 24)));
 
     // Normalize raw SerpApi data to our platform's unified interface
-    const normalized = normalizeSerpApiResponse(data, checkIn, checkOut, parseInt(adults), parseInt(children));
+    const normalized = normalizeSerpApiResponse(data, checkIn, checkOut, reqAdults, reqChildren);
     
     // Enrich with true cost calculations
-    const enriched = normalized.map(prop => enrichPropertyWithCosts(prop, nights, parseInt(adults), parseInt(children)));
+    const enriched = normalized.map(prop => enrichPropertyWithCosts(prop, nights, reqAdults, reqChildren));
 
     return NextResponse.json(enriched);
   } catch (error: any) {
