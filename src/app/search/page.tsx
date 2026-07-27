@@ -144,30 +144,30 @@ function SearchDashboardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-nexora-dark py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
       {/* Top AI Summary Banner */}
-      <div className="bg-gradient-to-r from-alpine-900 via-alpine-800 to-glacial-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-white/10 relative overflow-hidden">
+      <div className="bg-nexora-card text-nexora-cream rounded-3xl p-6 sm:p-8 shadow-nexora border border-nexora-border relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-3xl">
             <div className="inline-flex items-center gap-2 bg-gold-500/20 text-gold-300 text-xs font-bold px-3 py-1 rounded-full border border-gold-500/30">
               <Sparkles className="w-3.5 h-3.5 text-gold-400" />
               AI Recommendation Summary
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-display leading-snug text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-serif leading-snug text-nexora-cream">
               Personalized Results for Your Group of {adults + children}
             </h1>
-            <p className="text-sm text-slate-200 leading-relaxed font-normal">
+            <p className="text-sm text-nexora-cream-muted leading-relaxed font-normal">
               {recommendationSummary}
             </p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 text-xs space-y-1 shrink-0">
-            <div className="flex items-center gap-2 text-slate-300">
-              <Calendar className="w-3.5 h-3.5 text-gold-400" />
+          <div className="bg-nexora-surface p-4 rounded-2xl border border-nexora-border text-xs space-y-1 shrink-0">
+            <div className="flex items-center gap-2 text-nexora-cream-muted">
+              <Calendar className="w-3.5 h-3.5 text-nexora-gold" />
               <span>{checkIn} to {checkOut}</span>
             </div>
-            <div className="flex items-center gap-2 text-slate-300">
-              <MapPin className="w-3.5 h-3.5 text-gold-400" />
+            <div className="flex items-center gap-2 text-nexora-cream-muted">
+              <MapPin className="w-3.5 h-3.5 text-nexora-gold" />
               <span>{destinations.join(", ") || "Canadian Rockies"}</span>
             </div>
           </div>
@@ -175,89 +175,85 @@ function SearchDashboardContent() {
       </div>
 
       {/* Date Flexibility Alert */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950 shadow-sm">
+      <div className="bg-nexora-surface border border-emerald-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-nexora-cream shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-100 rounded-xl text-emerald-800 shrink-0">
+          <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shrink-0">
             <TrendingDown className="w-5 h-5" />
           </div>
           <div>
-            <span className="font-bold text-sm block">Flexible Dates Opportunity</span>
-            <p>
-              Shifting check-in from <strong>{checkIn}</strong> to midweek (Sunday–Wednesday) may reduce your total stay cost by up to <strong>$140 CAD</strong> in Canmore.
+            <span className="font-bold text-sm block text-emerald-400">Flexible Dates Opportunity</span>
+            <p className="text-nexora-cream-muted">
+              Shifting check-in from <strong className="text-nexora-cream">{checkIn}</strong> to midweek (Sunday–Wednesday) may reduce your total stay cost by up to <strong className="text-emerald-400">$140 CAD</strong> in Canmore.
             </p>
           </div>
         </div>
         <button
           onClick={() => alert("Searching nearby date shift combinations...")}
-          className="bg-emerald-800 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl shrink-0 transition-colors"
+          className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold px-4 py-2 rounded-xl shrink-0 transition-colors"
         >
           Check Date Shift Savings
         </button>
       </div>
 
       {/* Filter & Sort Controls */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-nexora-card rounded-2xl p-4 border border-nexora-border shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Town Filter Pills */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <span className="text-xs font-bold text-slate-500 flex items-center gap-1 mr-1">
+          <span className="text-xs font-bold text-nexora-cream-muted flex items-center gap-1 mr-1">
             <Filter className="w-3.5 h-3.5" /> Town:
           </span>
           {["all", "Canmore", "Banff", "Lake Louise", "Dead Man's Flats", "Golden"].map((t) => (
             <button
               key={t}
               onClick={() => setSelectedTownFilter(t)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors capitalize ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors capitalize border ${
                 selectedTownFilter === t
-                  ? "bg-alpine-800 text-white shadow"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  ? "bg-nexora-gold text-nexora-dark border-nexora-gold shadow-[0_0_10px_rgba(196,154,16,0.3)]"
+                  : "bg-nexora-surface text-nexora-cream-muted border-nexora-border hover:border-nexora-gold/50"
               }`}
             >
               {t === "all" ? "All Locations" : t}
             </button>
           ))}
-        </div>
-
-        {/* Sort & Compare Launchers */}
+        </div>        {/* Sort & Compare Launchers */}
         <div className="flex items-center gap-3 w-full md:w-auto justify-end">
           {comparedProperties.length > 0 && (
             <button
               onClick={() => setIsCompareOpen(true)}
-              className="bg-gold-500 hover:bg-gold-400 text-alpine-950 font-extrabold text-xs px-4 py-2 rounded-xl shadow transition-all flex items-center gap-1.5"
+              className="bg-nexora-gold hover:bg-nexora-gold-bright text-nexora-dark font-extrabold text-xs px-4 py-2 rounded-xl shadow transition-all flex items-center gap-1.5"
             >
               <Layers className="w-4 h-4" /> Compare ({comparedProperties.length})
             </button>
           )}
 
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-slate-500" />
+          <div className="flex items-center gap-2 bg-nexora-surface border border-nexora-border rounded-xl p-1">
+            <SlidersHorizontal className="w-4 h-4 text-nexora-cream-muted ml-2" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="p-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white"
+              className="bg-transparent border-none text-xs font-bold text-nexora-cream py-1.5 pr-8 pl-1 focus:ring-0 cursor-pointer outline-none"
             >
               <option value="best_value">Best Overall Value</option>
-              <option value="cheapest_total">Cheapest Total Cost</option>
-              <option value="highest_rated">Highest Guest Rating</option>
+              <option value="cheapest_total">Lowest Total Cost</option>
+              <option value="highest_rated">Highest Rated</option>
               <option value="most_spacious">Most Bedrooms</option>
             </select>
           </div>
 
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className="flex bg-nexora-surface border border-nexora-border rounded-xl p-1 gap-1">
             <button
               onClick={() => setViewMode("grid")}
               className={`p-1.5 rounded-lg transition-colors ${
-                viewMode === "grid" ? "bg-white text-alpine-800 shadow" : "text-slate-500"
+                viewMode === "grid" ? "bg-nexora-card text-nexora-gold shadow-sm" : "text-nexora-cream-muted hover:text-nexora-cream"
               }`}
-              title="Grid View"
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("map")}
               className={`p-1.5 rounded-lg transition-colors ${
-                viewMode === "map" ? "bg-white text-alpine-800 shadow" : "text-slate-500"
+                viewMode === "map" ? "bg-nexora-card text-nexora-gold shadow-sm" : "text-nexora-cream-muted hover:text-nexora-cream"
               }`}
-              title="Map View"
             >
               <Map className="w-4 h-4" />
             </button>
@@ -269,17 +265,17 @@ function SearchDashboardContent() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-6">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full border-4 border-slate-200" />
-            <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-gold-500 border-t-transparent animate-spin" />
-            <Sparkles className="w-6 h-6 text-gold-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-16 h-16 rounded-full border-4 border-nexora-surface" />
+            <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-nexora-gold border-t-transparent animate-spin" />
+            <Sparkles className="w-6 h-6 text-nexora-gold absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest animate-pulse">Scanning live inventory across 50+ providers...</p>
+          <p className="text-sm font-bold text-nexora-cream-muted uppercase tracking-widest animate-pulse">Scanning live inventory across 50+ providers...</p>
         </div>
       ) : viewMode === "grid" ? (
         <div className="space-y-6">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
+          <div className="flex items-center justify-between text-xs text-nexora-cream-muted font-semibold px-1">
             <span>Showing {rankedProperties.length} verified accommodation option(s)</span>
-            <span className="flex items-center gap-1 text-emerald-800 font-bold">
+            <span className="flex items-center gap-1.5 text-emerald-400">
               <ShieldCheck className="w-4 h-4" /> All totals include cleaning, taxes & parking fees
             </span>
           </div>
