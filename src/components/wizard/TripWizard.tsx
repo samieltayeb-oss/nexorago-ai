@@ -60,6 +60,12 @@ export const TripWizard: React.FC = () => {
 
   const handleNext = () => {
     if (step < totalSteps) {
+      if (step === 4) {
+        // Auto-suggest bedrooms based on group size (approx 2 people per room)
+        const totalGuests = criteria.adults + criteria.children;
+        const recommendedBeds = Math.min(4, Math.max(1, Math.ceil(totalGuests / 2)));
+        setCriteria((prev) => ({ ...prev, bedrooms: recommendedBeds }));
+      }
       setStep(step + 1);
     } else {
       const queryParams = new URLSearchParams({
@@ -375,7 +381,14 @@ export const TripWizard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
+            <div className="bg-[#1A1A1A] p-4 rounded-2xl border border-[#C49A10]/30 flex items-start sm:items-center gap-3">
+              <Sparkles className="w-5 h-5 text-[#C49A10] shrink-0 mt-0.5 sm:mt-0" />
+              <p className="text-xs text-[#F2EDE4] font-medium leading-relaxed">
+                <strong className="text-[#C49A10]">AI Recommendation:</strong> Based on your group of {criteria.adults + criteria.children}, we've pre-selected {Math.min(4, Math.max(1, Math.ceil((criteria.adults + criteria.children) / 2)))} bedrooms to ensure everyone has enough space.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
               {[
                 { count: 1, label: "1 Bedroom / Studio" },
                 { count: 2, label: "2 Bedrooms" },
