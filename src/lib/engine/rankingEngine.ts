@@ -11,11 +11,15 @@ export function scoreAndRankProperties(
     let score = 50; // Base score
     const reasons: string[] = [];
 
-    // 1. Capacity & Bedrooms match
-    if (property.maximumGuests >= totalGuests) {
-      score += 15;
+    // 1. Capacity, Rooms, & Bedrooms match
+    const roomsNeeded = Math.max(1, Math.ceil(totalGuests / property.maximumGuests));
+    
+    if (roomsNeeded === 1) {
+      score += 15; // Perfect fit in one room
+      reasons.push(`Fits your entire group in a single unit`);
     } else {
-      score -= 50; // Insufficient capacity
+      score -= (roomsNeeded - 1) * 10; // Slight penalty for needing multiple rooms, but NOT filtered out
+      reasons.push(`Requires booking ${roomsNeeded} units for your group of ${totalGuests}`);
     }
 
     if (property.bedrooms >= requestedBedrooms) {

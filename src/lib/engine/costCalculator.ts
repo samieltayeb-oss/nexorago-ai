@@ -9,6 +9,7 @@ export interface CostCalculationInput {
   parkingFeePerNight: number;
   adults: number;
   children: number;
+  maximumGuests: number;
 }
 
 export interface CostCalculationResult {
@@ -29,16 +30,20 @@ export interface CostCalculationResult {
 export function calculateTrueTotalCost(input: CostCalculationInput): CostCalculationResult {
   const nights = Math.max(1, input.nights);
   const totalTravellers = Math.max(1, input.adults + input.children);
+  const roomsNeeded = Math.max(1, Math.ceil(totalTravellers / (input.maximumGuests || 4)));
 
-  const baseTotal = input.nightlyBaseRate * nights;
+  // Base rate, cleaning, and resort fees are per room
+  const baseTotal = input.nightlyBaseRate * nights * roomsNeeded;
   
   // Tax calculation (if percentage e.g. 0.11 for Alberta 5% GST + 4% Tourism Levy + 2% DMF/Local)
   const taxRate = input.taxes < 1 ? input.taxes : input.taxes / 100;
   const taxTotal = Math.round((baseTotal * (taxRate || 0.11)) * 100) / 100;
 
-  const cleaningFee = Math.round(input.cleaningFee * 100) / 100;
-  const resortFeeTotal = Math.round((input.resortFee * nights) * 100) / 100;
-  const parkingTotal = Math.round((input.parkingFeePerNight * nights) * 100) / 100;
+  const cleaningFee = Math.round(input.cleaningFee * roomsNeeded * 100) / 100;
+  const resortFeeTotal = Math.round((input.resortFee * nights * roomsNeeded) * 100) / 100;
+  
+  // Parking is usually per vehicle. We'll estimate 1 vehicle per room.
+  const parkingTotal = Math.round((input.parkingFeePerNight * nights * roomsNeeded) * 100) / 100;
 
   const totalStayCost = Math.round(
     (baseTotal + taxTotal + cleaningFee + resortFeeTotal + parkingTotal) * 100
@@ -77,6 +82,7 @@ export function enrichPropertyWithCosts(
     parkingFeePerNight: property.hasFreeParking ? 0 : (property.parkingFeePerNight || 0),
     adults,
     children,
+    maximumGuests: property.maximumGuests,
   });
 
   return {
