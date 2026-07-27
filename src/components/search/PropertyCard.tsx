@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { AccommodationProperty } from "@/types";
 import { generateWorkingProviderLinks } from "@/lib/providers/mockProvider";
 import {
@@ -43,8 +44,14 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     }
   };
 
+  const searchParams = useSearchParams();
+  const checkIn = searchParams.get("in") || "2026-08-10";
+  const checkOut = searchParams.get("out") || "2026-08-13";
+  const adults = parseInt(searchParams.get("adults") || "2");
+  const children = parseInt(searchParams.get("children") || "0");
+
   const confidenceInfo = getConfidenceBadge(property.priceConfidence);
-  const links = generateWorkingProviderLinks(property.propertyName, property.destination);
+  const links = generateWorkingProviderLinks(property.propertyName, property.destination, checkIn, checkOut, adults, children);
 
   return (
     <div className="bg-[#111111] rounded-3xl border border-[#C49A10]/20 shadow-nexora hover:border-[#C49A10]/50 transition-all duration-300 overflow-hidden flex flex-col lg:flex-row group text-[#F2EDE4]">
