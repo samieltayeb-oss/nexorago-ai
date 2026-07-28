@@ -8,6 +8,8 @@ import { generateAIRecommendationSummary } from "@/lib/engine/townComparer";
 import { PropertyCard } from "@/components/search/PropertyCard";
 import { TownComparisonSection } from "@/components/search/TownComparisonSection";
 import { CompareModal } from "@/components/search/CompareModal";
+import { PdfDownloadButton } from "@/components/itinerary/PdfDownloadButton";
+import { ShareModal } from "@/components/itinerary/ShareModal";
 import { SearchCriteria, AccommodationProperty } from "@/types";
 import {
   Sparkles,
@@ -20,6 +22,13 @@ import {
   ShieldCheck,
   TrendingDown,
   Layers,
+  CloudRain,
+  Sun,
+  Clock,
+  Info,
+  Snowflake,
+  Leaf,
+  TreePine
 } from "lucide-react";
 
 function SearchDashboardContent() {
@@ -37,9 +46,12 @@ function SearchDashboardContent() {
 
   const [selectedTownFilter, setSelectedTownFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("best_value");
-  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "map" | "ai">("grid");
   const [comparedProperties, setComparedProperties] = useState<AccommodationProperty[]>([]);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [itinerary, setItinerary] = useState<any>(null);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Fetch live properties from API
   const [rawProperties, setRawProperties] = useState<AccommodationProperty[]>([]);
@@ -140,6 +152,31 @@ function SearchDashboardContent() {
       if (comparedProperties.length < 4) {
         setComparedProperties([...comparedProperties, prop]);
       }
+    }
+  };
+
+  const generateItinerary = async () => {
+    setViewMode("ai");
+    if (itinerary) return; // already generated
+    
+    setIsGeneratingAI(true);
+    try {
+      const res = await fetch("/api/itinerary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(searchCriteria)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error?.message || "API returned an error");
+      }
+      setItinerary(data.data);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate itinerary. Please try again.");
+      setViewMode("grid"); // Revert view if it fails
+    } finally {
+      setIsGeneratingAI(false);
     }
   };
 
@@ -257,6 +294,14 @@ function SearchDashboardContent() {
             >
               <Map className="w-4 h-4" />
             </button>
+            <button
+              onClick={generateItinerary}
+              className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 px-3 text-xs font-bold ${
+                viewMode === "ai" ? "bg-nexora-gold text-nexora-dark shadow-sm" : "text-nexora-gold hover:text-nexora-gold-bright"
+              }`}
+            >
+              <Sparkles className="w-4 h-4" /> AI Trip
+            </button>
           </div>
         </div>
       </div>
@@ -291,7 +336,7 @@ function SearchDashboardContent() {
             ))}
           </div>
         </div>
-      ) : (
+      ) : viewMode === "map" ? (
         /* Map View Overlay */
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg space-y-4">
           <div className="flex items-center justify-between">
@@ -324,7 +369,174 @@ function SearchDashboardContent() {
             </div>
           </div>
         </div>
-      )}
+      ) : viewMode === "ai" ? (
+        <div className="bg-nexora-card rounded-3xl p-6 md:p-10 border border-nexora-gold/30 shadow-gold relative overflow-hidden min-h-[500px]">
+          {isGeneratingAI ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-nexora-card/80 backdrop-blur-sm z-20 space-y-6">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full border-4 border-nexora-surface" />
+                <div className="absolute inset-0 w-20 h-20 rounded-full border-4 border-nexora-gold border-t-transparent animate-spin" />
+                <Sparkles className="w-8 h-8 text-nexora-gold absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+              </div>
+              <h3 className="text-xl font-serif text-nexora-cream">Nexora is consulting local guides...</h3>
+              <p className="text-xs font-mono text-nexora-gold uppercase tracking-widest animate-pulse">Building personalized Rockies itinerary</p>
+            </div>
+          ) : itinerary ? (
+            <div className="space-y-8 relative z-10 animate-fade-in text-nexora-cream">
+              <div className="text-center space-y-4 mb-12">
+                <div className="inline-flex items-center gap-2 bg-nexora-gold/20 text-nexora-gold text-xs font-bold px-4 py-1.5 rounded-full border border-nexora-gold/30">
+                  <Sparkles className="w-4 h-4" />
+                  Your Custom VIP Itinerary
+                </div>
+                <h2 className="text-3xl md:text-4xl font-serif font-light">{itinerary.summary}</h2>
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+                  <p className="text-nexora-cream-muted font-mono text-xs uppercase tracking-widest">
+                    Optimal Base: <strong className="text-nexora-gold">{itinerary.bestBase}</strong>
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <PdfDownloadButton itinerary={itinerary} />
+                    <button 
+                      onClick={() => setIsShareModalOpen(true)}
+                      className="btn-nexora-outline py-3 px-6 rounded-xl flex items-center gap-2 font-bold transition-transform hover:scale-105"
+                    >
+                      <Sparkles className="w-4 h-4" /> Share Trip
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Seasonal Intelligence Banner */}
+              {itinerary.seasonalIntelligence && (
+                <div className="bg-gradient-to-r from-emerald-900/40 to-transparent border-l-4 border-emerald-500 rounded-r-2xl p-6 mb-12 shadow-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-emerald-500/20 rounded-xl">
+                      {itinerary.seasonalIntelligence.season === "Winter" ? <Snowflake className="w-5 h-5 text-emerald-400" /> : 
+                       itinerary.seasonalIntelligence.season === "Fall" ? <Leaf className="w-5 h-5 text-emerald-400" /> :
+                       <TreePine className="w-5 h-5 text-emerald-400" />}
+                    </div>
+                    <h3 className="text-lg font-bold font-serif text-emerald-400">
+                      {itinerary.seasonalIntelligence.season} Intelligence Strategy
+                    </h3>
+                  </div>
+                  <p className="text-sm text-nexora-cream leading-relaxed max-w-4xl pl-14">
+                    {itinerary.seasonalIntelligence.aiStrategy}
+                  </p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+                <div className="p-4 bg-nexora-surface rounded-2xl border border-nexora-border text-center shadow-nexora">
+                  <span className="block text-xs font-mono text-nexora-cream-muted uppercase tracking-wider mb-1">Stays</span>
+                  <strong className="text-xl text-emerald-400">${itinerary.estimatedBudget?.accommodation}</strong>
+                </div>
+                <div className="p-4 bg-nexora-surface rounded-2xl border border-nexora-border text-center shadow-nexora">
+                  <span className="block text-xs font-mono text-nexora-cream-muted uppercase tracking-wider mb-1">Activities</span>
+                  <strong className="text-xl text-emerald-400">${itinerary.estimatedBudget?.activities}</strong>
+                </div>
+                <div className="p-4 bg-nexora-surface rounded-2xl border border-nexora-border text-center shadow-nexora">
+                  <span className="block text-xs font-mono text-nexora-cream-muted uppercase tracking-wider mb-1">Food</span>
+                  <strong className="text-xl text-emerald-400">${itinerary.estimatedBudget?.food}</strong>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {itinerary.dailyItinerary?.map((day: any) => (
+                  <div key={day.dayNumber} className="bg-nexora-surface border border-nexora-border p-6 rounded-3xl space-y-6 shadow-nexora hover:border-nexora-gold/30 transition-all">
+                    <div className="border-b border-nexora-border pb-4 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-2xl font-serif text-nexora-gold">Day {day.dayNumber}: {day.theme}</h3>
+                        <p className="text-xs font-mono text-nexora-cream-muted mt-1">{day.date}</p>
+                      </div>
+                      
+                      {/* Weather Intelligence Block */}
+                      {day.weatherIntelligence && (
+                        <div className="bg-[#111111] border border-sky-500/30 rounded-xl p-4 max-w-sm shrink-0 shadow-sm relative overflow-hidden group">
+                          <div className="absolute inset-0 bg-gradient-to-br from-sky-500/5 to-transparent opacity-50" />
+                          <div className="relative z-10 space-y-2">
+                            <div className="flex items-center gap-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
+                              {day.weatherIntelligence.forecastSummary.toLowerCase().includes("rain") ? (
+                                <CloudRain className="w-4 h-4" />
+                              ) : (
+                                <Sun className="w-4 h-4 text-amber-400" />
+                              )}
+                              Weather Intelligence
+                            </div>
+                            <p className="text-sm text-[#F2EDE4] font-semibold">{day.weatherIntelligence.forecastSummary}</p>
+                            <div className="flex items-start gap-1.5 text-xs text-[#ADA89F] mt-1 pt-2 border-t border-[#1A1A1A]">
+                              <Sparkles className="w-3.5 h-3.5 text-nexora-gold shrink-0 mt-0.5" />
+                              <span>{day.weatherIntelligence.aiRecommendation}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-4">
+                        <span className="text-xs font-bold text-nexora-cream-muted uppercase tracking-wider flex items-center gap-2">Morning</span>
+                        <div className="space-y-3">
+                          {Array.isArray(day.morning) ? day.morning.map((act: any, i: number) => (
+                            <div key={i} className="bg-[#111111] border border-[#1A1A1A] rounded-lg p-3 space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-[#F2EDE4]">{act.title}</span>
+                                <span className="text-nexora-gold font-mono">{act.time}</span>
+                              </div>
+                              <p className="text-xs text-[#ADA89F] line-clamp-2">{act.description}</p>
+                              <div className="flex items-center gap-2 pt-1 text-[10px] text-[#5C5852] font-mono">
+                                <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {act.durationMinutes}m</span>
+                                {act.estimatedCost > 0 && <span className="flex items-center gap-0.5 ml-2 text-emerald-500/70">${act.estimatedCost}</span>}
+                              </div>
+                            </div>
+                          )) : <p className="text-sm text-[#ADA89F]">{day.morning}</p>}
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <span className="text-xs font-bold text-nexora-cream-muted uppercase tracking-wider flex items-center gap-2">Afternoon</span>
+                        <div className="space-y-3">
+                          {Array.isArray(day.afternoon) ? day.afternoon.map((act: any, i: number) => (
+                            <div key={i} className="bg-[#111111] border border-[#1A1A1A] rounded-lg p-3 space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-[#F2EDE4]">{act.title}</span>
+                                <span className="text-nexora-gold font-mono">{act.time}</span>
+                              </div>
+                              <p className="text-xs text-[#ADA89F] line-clamp-2">{act.description}</p>
+                              <div className="flex items-center gap-2 pt-1 text-[10px] text-[#5C5852] font-mono">
+                                <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {act.durationMinutes}m</span>
+                                {act.estimatedCost > 0 && <span className="flex items-center gap-0.5 ml-2 text-emerald-500/70">${act.estimatedCost}</span>}
+                              </div>
+                            </div>
+                          )) : <p className="text-sm text-[#ADA89F]">{day.afternoon}</p>}
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <span className="text-xs font-bold text-nexora-cream-muted uppercase tracking-wider flex items-center gap-2">Evening</span>
+                        <div className="space-y-3">
+                          {Array.isArray(day.evening) ? day.evening.map((act: any, i: number) => (
+                            <div key={i} className="bg-[#111111] border border-[#1A1A1A] rounded-lg p-3 space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-[#F2EDE4]">{act.title}</span>
+                                <span className="text-nexora-gold font-mono">{act.time}</span>
+                              </div>
+                              <p className="text-xs text-[#ADA89F] line-clamp-2">{act.description}</p>
+                              <div className="flex items-center gap-2 pt-1 text-[10px] text-[#5C5852] font-mono">
+                                <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {act.durationMinutes}m</span>
+                                {act.estimatedCost > 0 && <span className="flex items-center gap-0.5 ml-2 text-emerald-500/70">${act.estimatedCost}</span>}
+                              </div>
+                            </div>
+                          )) : <p className="text-sm text-[#ADA89F]">{day.evening}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-32 text-nexora-cream-muted">
+              Failed to load itinerary.
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {/* Town Location Decision Engine Section */}
       <TownComparisonSection />
@@ -337,6 +549,13 @@ function SearchDashboardContent() {
           onRemove={(id) => setComparedProperties(comparedProperties.filter((p) => p.id !== id))}
         />
       )}
+
+      {/* Share Modal */}
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        tripData={{ itinerary, budget: itinerary?.estimatedBudget, hotel: {} }} 
+      />
     </div>
   );
 }

@@ -1,24 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AccommodationProperty } from "@/types";
 import { generateWorkingProviderLinks } from "@/lib/providers/mockProvider";
+import { calculateTrueTripCost } from "@/lib/engine/budgetEngine";
 import {
   Star,
   Bed,
   Users,
   Utensils,
   Car,
-  ExternalLink,
   ShieldCheck,
   ChevronDown,
   ChevronUp,
   Search,
-  TrendingUp,
-  Map,
-  Sparkles,
   CheckCircle2,
 } from "lucide-react";
 
@@ -34,6 +30,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   isCompared = false,
 }) => {
   const [showFeeDetails, setShowFeeDetails] = useState(false);
+  const [costViewMode, setCostViewMode] = useState<"family" | "adult" | "child" | "night">("family");
 
   const getConfidenceBadge = (confidence: string) => {
     switch (confidence) {
@@ -53,9 +50,34 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const checkOut = searchParams.get("out") || "2026-08-13";
   const adults = parseInt(searchParams.get("adults") || "2");
   const children = parseInt(searchParams.get("children") || "0");
+  
+  const dIn = new Date(checkIn).getTime();
+  const dOut = new Date(checkOut).getTime();
+  const nights = Math.max(1, Math.ceil((dOut - dIn) / (1000 * 3600 * 24)));
+  const totalPeople = adults + children;
 
   const confidenceInfo = getConfidenceBadge(property.priceConfidence);
   const links = generateWorkingProviderLinks(property.propertyName, property.destination, checkIn, checkOut, adults, children, property.maximumGuests);
+
+  // Calculate True Trip Cost
+  const budget = calculateTrueTripCost(property, checkIn, checkOut, adults, children);
+
+  // Helper to format currency based on selected view mode
+  const getDisplayCost = (totalAmount: number) => {
+    switch (costViewMode) {
+      case "adult":
+        return Math.round(totalAmount / Math.max(1, adults));
+      case "child":
+        return Math.round(totalAmount / Math.max(1, totalPeople)); // spreading evenly as base approximation
+      case "night":
+        return Math.round(totalAmount / Math.max(1, nights));
+      case "family":
+      default:
+        return Math.round(totalAmount);
+    }
+  };
+
+  const displayGrandTotal = getDisplayCost(budget.grandTotal);
 
   return (
     <div className="bg-[#111111] rounded-3xl border border-[#C49A10]/20 shadow-nexora hover:border-[#C49A10]/50 transition-all duration-300 overflow-hidden flex flex-col lg:flex-row group text-[#F2EDE4]">
@@ -149,71 +171,81 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 
         {/* Pricing & Multi-Provider Search Bar */}
         <div className="pt-4 border-t border-[#1A1A1A] space-y-4">
-          {/* Price Breakdown */}
           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4">
-            <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-serif font-light text-[#F2EDE4]">
-                  ${Math.round(property.totalStayCost)} <span className="text-[#C49A10] text-xl">CAD</span>
-                </span>
-                <span className="font-mono text-[10px] text-[#ADA89F] uppercase tracking-wider">True Total Stay</span>
+            <div className="w-full">
+              {/* True Trip Cost Header */}
+              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-serif font-light text-[#F2EDE4]">
+                    ${displayGrandTotal} <span className="text-[#C49A10] text-xl">CAD</span>
+                  </span>
+                  <span className="font-mono text-[10px] text-[#C49A10] uppercase tracking-wider font-bold bg-[#C49A10]/10 px-2 py-0.5 rounded border border-[#C49A10]/20">
+                    True Trip Cost
+                  </span>
+                </div>
+
+                {/* View Mode Tabs */}
+                <div className="flex bg-[#080808] border border-[#1A1A1A] rounded-lg p-0.5 self-start">
+                  <button onClick={() => setCostViewMode("family")} className={`text-[10px] font-mono uppercase px-2 py-1 rounded-md transition-colors ${costViewMode === "family" ? "bg-[#111111] text-[#F2EDE4] font-bold border border-[#333]" : "text-[#5C5852] hover:text-[#ADA89F]"}`}>Family</button>
+                  <button onClick={() => setCostViewMode("adult")} className={`text-[10px] font-mono uppercase px-2 py-1 rounded-md transition-colors ${costViewMode === "adult" ? "bg-[#111111] text-[#F2EDE4] font-bold border border-[#333]" : "text-[#5C5852] hover:text-[#ADA89F]"}`}>Adult</button>
+                  <button onClick={() => setCostViewMode("child")} className={`text-[10px] font-mono uppercase px-2 py-1 rounded-md transition-colors ${costViewMode === "child" ? "bg-[#111111] text-[#F2EDE4] font-bold border border-[#333]" : "text-[#5C5852] hover:text-[#ADA89F]"}`}>Child</button>
+                  <button onClick={() => setCostViewMode("night")} className={`text-[10px] font-mono uppercase px-2 py-1 rounded-md transition-colors ${costViewMode === "night" ? "bg-[#111111] text-[#F2EDE4] font-bold border border-[#333]" : "text-[#5C5852] hover:text-[#ADA89F]"}`}>Night</button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-3 font-mono text-xs text-[#ADA89F] mt-1">
-                <span>${property.nightlyBaseRate}/night base</span>
-                <span>•</span>
-                <span>${Math.round(property.effectiveCostPerPerson)}/person</span>
+              <div className="flex items-center gap-3 font-mono text-xs text-[#ADA89F] mb-3">
+                <span>Includes Hotel, Taxes, Fuel, Park Pass, Food & Activities.</span>
                 <button
                   type="button"
                   onClick={() => setShowFeeDetails(!showFeeDetails)}
-                  className="text-[#C49A10] font-bold hover:underline flex items-center gap-0.5 ml-1"
+                  className="text-[#C49A10] font-bold hover:underline flex items-center gap-0.5 ml-auto sm:ml-1"
                 >
                   Breakdown {showFeeDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
               </div>
 
-              {/* Fee Breakdown Drawer */}
+              {/* Comprehensive Budget Engine Breakdown */}
               {showFeeDetails && (
-                <div className="mt-3 p-3 bg-[#080808] rounded-xl border border-[#C49A10]/20 text-xs font-mono space-y-1 text-[#ADA89F]">
-                  <div className="flex justify-between">
-                    <span>Nightly Base:</span>
-                    <span className="text-[#F2EDE4]">${property.nightlyBaseRate} CAD</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Est. Taxes (11% AB Levy/GST):</span>
-                    <span className="text-[#F2EDE4]">${Math.round(property.taxes)} CAD</span>
-                  </div>
-                  {property.cleaningFee > 0 && (
-                    <div className="flex justify-between">
-                      <span>Cleaning Fee:</span>
-                      <span className="text-[#F2EDE4]">${property.cleaningFee} CAD</span>
+                <div className="p-4 bg-[#080808] rounded-xl border border-[#C49A10]/20 text-xs font-mono text-[#ADA89F] mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                    <div className="flex justify-between border-b border-[#1A1A1A] pb-1">
+                      <span>Accommodation:</span>
+                      <span className="text-[#F2EDE4]">${getDisplayCost(budget.accommodationTotal)} CAD</span>
                     </div>
-                  )}
-                  {property.resortFee > 0 && (
-                    <div className="flex justify-between">
-                      <span>Resort / Destination Fee:</span>
-                      <span className="text-[#F2EDE4]">${property.resortFee} CAD</span>
+                    <div className="flex justify-between border-b border-[#1A1A1A] pb-1">
+                      <span>Taxes & Fees:</span>
+                      <span className="text-[#F2EDE4]">${getDisplayCost(budget.taxesAndFees)} CAD</span>
                     </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span>Parking:</span>
-                    <span className="text-[#F2EDE4]">
-                      {property.hasFreeParking ? "Free" : `$${property.parkingFeePerNight}/night`}
-                    </span>
+                    <div className="flex justify-between border-b border-[#1A1A1A] pb-1">
+                      <span>Est. Fuel (RT + Local):</span>
+                      <span className="text-[#F2EDE4]">${getDisplayCost(budget.fuelTotal)} CAD</span>
+                    </div>
+                    <div className="flex justify-between border-b border-[#1A1A1A] pb-1">
+                      <span>National Park Pass:</span>
+                      <span className="text-[#F2EDE4]">${getDisplayCost(budget.parkPassesTotal)} CAD</span>
+                    </div>
+                    <div className="flex justify-between border-b border-[#1A1A1A] pb-1">
+                      <span>Food {property.hasKitchen && <span className="text-emerald-500/70">(Kitchen Savings)</span>}:</span>
+                      <span className="text-[#F2EDE4]">${getDisplayCost(budget.foodTotal)} CAD</span>
+                    </div>
+                    <div className="flex justify-between border-b border-[#1A1A1A] pb-1">
+                      <span>Activities:</span>
+                      <span className="text-[#F2EDE4]">${getDisplayCost(budget.activitiesTotal)} CAD</span>
+                    </div>
                   </div>
-                  <div className="pt-1 border-t border-[#1A1A1A] flex justify-between font-bold text-[#C49A10]">
-                    <span>True Total Stay:</span>
-                    <span>${Math.round(property.totalStayCost)} CAD</span>
+                  <div className="mt-3 pt-2 border-t border-[#333333] flex justify-between font-bold text-[#C49A10] text-sm">
+                    <span>TOTAL TRUE TRIP COST (Per {costViewMode.charAt(0).toUpperCase() + costViewMode.slice(1)}):</span>
+                    <span>${displayGrandTotal} CAD</span>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Primary CTA → Direct to exact Google Hotels link to guarantee price match */}
-            <div className="flex flex-col items-end gap-1.5 w-full lg:w-auto shrink-0">
+            {/* Primary CTA */}
+            <div className="flex flex-col items-end gap-1.5 w-full lg:w-auto shrink-0 self-start lg:self-end mt-2 lg:mt-0 lg:-translate-y-9">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 uppercase tracking-wider px-2">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                Exact Price Guaranteed
+                Hotel Base: ${Math.round(property.nightlyBaseRate)}/night
               </div>
               <a
                 href={property.bookingUrl}
@@ -226,7 +258,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             </div>
           </div>
 
-          {/* 7-Provider Live Search Bar */}
+          {/* Multi-Provider Live Search Bar */}
           <div className="flex flex-wrap items-center gap-2 p-3 bg-[#080808] rounded-xl border border-[#C49A10]/15">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#ADA89F] mr-1">
               Compare on:
@@ -270,22 +302,6 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
               className="text-[11px] font-mono text-[#C49A10] hover:text-[#E5B830] hover:underline bg-[#111111] px-2.5 py-1 rounded border border-[#C49A10]/20 transition-colors"
             >
               Trivago
-            </a>
-            <a
-              href={links.tripAdvisor}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] font-mono text-[#C49A10] hover:text-[#E5B830] hover:underline bg-[#111111] px-2.5 py-1 rounded border border-[#C49A10]/20 transition-colors"
-            >
-              TripAdvisor
-            </a>
-            <a
-              href={links.airbnb}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] font-mono text-[#C49A10] hover:text-[#E5B830] hover:underline bg-[#111111] px-2.5 py-1 rounded border border-[#C49A10]/20 transition-colors"
-            >
-              Airbnb
             </a>
           </div>
         </div>
