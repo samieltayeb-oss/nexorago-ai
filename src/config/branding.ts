@@ -73,7 +73,7 @@ export const BRANDING: BrandingConfig = {
     facebook: "https://facebook.com/nexoragoai",
   },
   legal: {
-    companyName: "NEXORA Growth & Travel Technologies Inc.",
+    companyName: "NEXORA",
     registration: "Alberta Corporation #202688941",
     affiliateDisclosure: "NexoraGo AI participates in travel partner affiliate programs. We may earn a commission on bookings made through links on our site at no extra cost to you. True total pricing remains completely transparent.",
     safetyDisclaimer: "Canadian Rockies weather, wildlife, and trail conditions change rapidly. AI recommendations do not replace official Parks Canada, Alberta Parks, or emergency safety alerts.",
