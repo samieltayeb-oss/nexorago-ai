@@ -238,7 +238,7 @@ export const Footer: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-[#111111]">
             <p className="text-sm">© {new Date().getFullYear()} {BRANDING.legal.companyName}. All rights reserved.</p>
             <p className="font-mono text-[11px] text-[#ADA89F]">
-              Engineered by <span className="text-[#C49A10] font-bold">NEXORA</span> for Canadian Rockies Travellers
+              Engineered by <a href="https://nexorayyc.io" target="_blank" rel="noopener noreferrer" className="text-[#C49A10] font-bold hover:text-[#E5B830] transition-colors">NEXORA</a> for Canadian Rockies Travellers
             </p>
           </div>
         </div>
