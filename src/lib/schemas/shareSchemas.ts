@@ -9,12 +9,13 @@ export const TripSnapshotSchema = z.object({
   adults: z.number().int().min(1),
   children: z.number().int().min(0),
   // Strict mapping of data types
-  tripData: z.record(z.any()).default({}), // e.g., raw search criteria
-  itineraryData: z.record(z.any()).optional(), // AI validated itinerary
-  budgetData: z.record(z.any()).optional(),
-  hotelData: z.record(z.any()).optional(),
-  advisoryData: z.record(z.any()).optional(),
+  tripData: z.record(z.string(), z.unknown()).optional(), // e.g., raw search criteria
+  itineraryData: z.record(z.string(), z.unknown()).optional(), // AI validated itinerary
+  budgetData: z.record(z.string(), z.unknown()).optional(),
+  hotelData: z.record(z.string(), z.unknown()).optional(),
+  advisoryData: z.record(z.string(), z.unknown()).optional(),
 });
+
 
 export type TripSnapshotInput = z.infer<typeof TripSnapshotSchema>;
 
@@ -34,9 +35,10 @@ export const PublicTripProjectionSchema = z.object({
   checkOut: z.string().optional(),
   adults: z.number(),
   children: z.number(),
-  itineraryData: z.record(z.any()).optional(),
-  budgetData: z.record(z.any()).optional(),
-  hotelData: z.record(z.any()).optional(),
-  advisoryData: z.record(z.any()).optional(),
+  itineraryData: z.record(z.string(), z.unknown()).optional(),
+  budgetData: z.record(z.string(), z.unknown()).optional(),
+  hotelData: z.record(z.string(), z.unknown()).optional(),
+  advisoryData: z.record(z.string(), z.unknown()).optional(),
   updatedAt: z.string()
 });
+

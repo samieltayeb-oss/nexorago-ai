@@ -100,9 +100,13 @@ export default async function SharedTripPage({ params }: PageProps) {
   if (!trip) notFound();
 
   // Async tracking (fire and forget)
-  supabase.rpc('increment_view_count', { row_id: shareId }).catch(() => {
-    supabase.from("trip_shares").update({ last_viewed_at: new Date().toISOString() }).eq("share_id", shareId).then();
-  });
+  void (async () => {
+    try {
+      await supabase.rpc('increment_view_count', { row_id: shareId });
+    } catch {
+      await supabase.from("trip_shares").update({ last_viewed_at: new Date().toISOString() }).eq("share_id", shareId);
+    }
+  })();
 
   const itinerary = trip.itinerary_data;
   const budget = trip.budget_data;

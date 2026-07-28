@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   NEXORA DESIGN TOKENS
+   ========================================================= */
 :root {
   --b: #080808;
   --b2: #111111;
@@ -18,34 +21,96 @@
   --font-cormorant: 'Cormorant Garamond', serif;
   --font-dmsans: 'DM Sans', sans-serif;
   --font-spacemono: 'Space Mono', monospace;
+
+  /* Safe-area custom properties (fallback to 0) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+
+  /* Z-index layer scale */
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-top: 70;
+}
+
+/* =========================================================
+   BASE RESET & BODY
+   ========================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Prevent iOS font-size bump on orientation change */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-dmsans);
   color: var(--w);
   background-color: var(--b);
-  overflow-x: hidden;
   font-weight: 300;
+  /* No overflow-x:hidden on body — masks structural bugs.
+     We fix the root causes instead. */
+  min-height: 100dvh;
 }
 
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Prevent main content from hiding behind fixed bottom nav on mobile */
+@media (max-width: 1023px) {
+  main {
+    padding-bottom: calc(64px + var(--sab));
+  }
 }
-::-webkit-scrollbar-track {
-  background: #080808;
-}
+
+/* =========================================================
+   SCROLLBARS
+   ========================================================= */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #080808; }
 ::-webkit-scrollbar-thumb {
   background: #222222;
   border: 1px solid var(--br);
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--g);
+::-webkit-scrollbar-thumb:hover { background: var(--g); }
+
+/* =========================================================
+   SCROLL LOCK (used by modals / drawers)
+   ========================================================= */
+.scroll-locked {
+  overflow: hidden !important;
+  /* Prevent iOS bounce scroll from leaking through */
+  touch-action: none;
 }
 
-/* NEXORA Glassmorphism Panels */
+/* =========================================================
+   FOCUS RING — WCAG 2.2 AA
+   ========================================================= */
+*:focus-visible {
+  outline: 2px solid #C49A10 !important;
+  outline-offset: 3px !important;
+  border-radius: 4px;
+}
+
+/* =========================================================
+   TOUCH TARGETS — minimum 44×44px effective size
+   ========================================================= */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =========================================================
+   GLASSMORPHISM
+   ========================================================= */
 .glass-panel {
   background: rgba(17, 17, 17, 0.9);
   backdrop-filter: blur(16px);
@@ -58,24 +123,29 @@ body {
   border: 1px solid rgba(196, 154, 16, 0.18);
 }
 
-/* NEXORA Buttons */
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 .btn-nexora-fill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   background: var(--g);
   color: #080808;
   font-family: var(--font-dmsans);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.22em;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 13px 32px;
+  padding: 14px 28px;
+  min-height: 48px;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   border: none;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
 .btn-nexora-fill:hover {
@@ -83,23 +153,59 @@ body {
   box-shadow: 0 0 20px rgba(229, 184, 48, 0.3);
 }
 
+.btn-nexora-fill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Full-width variant for mobile */
+.btn-nexora-fill-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--g);
+  color: #080808;
+  font-family: var(--font-dmsans);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 16px 24px;
+  min-height: 52px;
+  width: 100%;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  border-radius: 12px;
+}
+
+.btn-nexora-fill-full:hover {
+  background: var(--g2);
+  box-shadow: 0 0 24px rgba(229, 184, 48, 0.3);
+}
+
 .btn-nexora-line {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   border: 1px solid rgba(196, 154, 16, 0.4);
   color: var(--g);
   font-family: var(--font-dmsans);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.22em;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 13px 32px;
+  padding: 14px 28px;
+  min-height: 48px;
   text-decoration: none;
   background: transparent;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 4px;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
 .btn-nexora-line:hover {
@@ -107,43 +213,159 @@ body {
   background: rgba(196, 154, 16, 0.08);
 }
 
+/* Outline variant for secondary actions (fixes missing class from search page) */
+.btn-nexora-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(196, 154, 16, 0.35);
+  color: var(--g);
+  font-family: var(--font-dmsans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  min-height: 44px;
+  background: rgba(196, 154, 16, 0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 10px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn-nexora-outline:hover {
+  border-color: var(--g);
+  background: rgba(196, 154, 16, 0.12);
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   NEXORA PILLS & BADGES
+   ========================================================= */
 .nexora-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: rgba(196, 154, 16, 0.12);
   border: 1px solid rgba(196, 154, 16, 0.3);
   color: var(--g);
   font-family: var(--font-spacemono);
-  font-size: 9px;
-  letter-spacing: 0.15em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
   padding: 4px 10px;
   text-transform: uppercase;
   border-radius: 3px;
 }
 
-/* Gradient Text */
+/* =========================================================
+   TYPOGRAPHY UTILITIES
+   ========================================================= */
 .text-gradient-gold {
   background: linear-gradient(135deg, #C49A10 0%, #E5B830 50%, #F2EDE4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Micro-animations */
+/* =========================================================
+   SAFE-AREA UTILITIES
+   ========================================================= */
+.safe-top    { padding-top: var(--sat); }
+.safe-bottom { padding-bottom: var(--sab); }
+.safe-left   { padding-left: var(--sal); }
+.safe-right  { padding-right: var(--sar); }
+
+.pb-safe { padding-bottom: max(16px, var(--sab)); }
+.pt-safe { padding-top: max(12px, var(--sat)); }
+
+/* =========================================================
+   BOTTOM SHEET / DRAWER ANIMATIONS
+   ========================================================= */
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); opacity: 0.7; }
+  to   { transform: translateY(0);    opacity: 1;   }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0);    }
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-slide-up-sheet {
+  animation: slideUpSheet 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-backdrop {
+  animation: fadeInBackdrop 0.2s ease forwards;
+}
+
+/* =========================================================
+   FADE IN (general)
+   ========================================================= */
 .animate-fade-in {
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* =========================================================
+   SKELETON LOADING
+   ========================================================= */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0;  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 25%,
+    #242424 50%,
+    #1a1a1a 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-/* Focus Ring for WCAG 2.2 AA */
-*:focus-visible {
-  outline: 2px solid #C49A10 !important;
-  outline-offset: 2px !important;
+/* =========================================================
+   HIDE SCROLLBAR UTILITY
+   ========================================================= */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* =========================================================
+   HORIZONTAL OVERFLOW GUARD (structural fixes done first)
+   ========================================================= */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
 }

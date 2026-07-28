@@ -2,88 +2,149 @@
 
 import React, { useState } from "react";
 import { DEMO_ADVISORIES } from "@/lib/providers/advisoryProvider";
-import { ShieldAlert, ExternalLink, Filter, CheckCircle2, AlertTriangle, Info, Calendar, Sparkles } from "lucide-react";
+import {
+  ShieldAlert,
+  ExternalLink,
+  AlertTriangle,
+  Info,
+  Sparkles,
+  ChevronDown,
+  CheckCircle2,
+} from "lucide-react";
+
+const SEVERITY_CONFIG = {
+  critical: {
+    icon: AlertTriangle,
+    label: "Critical",
+    border: "border-rose-500/30",
+    bg: "bg-rose-500/5",
+    badge: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    iconColor: "text-rose-400",
+  },
+  warning: {
+    icon: ShieldAlert,
+    label: "Warning",
+    border: "border-amber-500/30",
+    bg: "bg-amber-500/5",
+    badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    iconColor: "text-amber-400",
+  },
+  info: {
+    icon: Info,
+    label: "Info",
+    border: "border-blue-500/30",
+    bg: "bg-blue-500/5",
+    badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    iconColor: "text-blue-400",
+  },
+} as const;
+
+type Severity = keyof typeof SEVERITY_CONFIG;
 
 export default function AdvisoriesPage() {
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
-  const [aiSummary, setAiSummary] = useState<any>(null);
+  const [aiSummary, setAiSummary] = useState<{ title: string; bullets: string[] } | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
-  const filteredAdvisories = DEMO_ADVISORIES.filter((adv) => {
-    if (filterSeverity === "all") return true;
-    return adv.severity === filterSeverity;
-  });
+  const filteredAdvisories = DEMO_ADVISORIES.filter(
+    (adv) => filterSeverity === "all" || adv.severity === filterSeverity
+  );
 
   const generateSummary = async () => {
     if (aiSummary) return;
     setIsGeneratingAI(true);
+    setAiError(null);
     try {
       const res = await fetch("/api/advisory-summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ advisories: filteredAdvisories })
+        body: JSON.stringify({ advisories: filteredAdvisories }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error?.message || "API returned an error");
+      if (!res.ok || !data.success) throw new Error(data.error?.message || "Failed to generate summary");
       setAiSummary(data.data);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to generate summary. Please try again.");
+    } catch (err: any) {
+      setAiError(err.message || "Unable to generate summary. Please try again.");
     } finally {
       setIsGeneratingAI(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-nexora-dark py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 font-sans">
-      {/* Header */}
-      <div className="bg-nexora-card text-nexora-cream rounded-3xl p-6 sm:p-10 shadow-nexora border border-nexora-border flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-        {/* Subtle Background Glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="space-y-4 max-w-3xl relative z-10">
-          <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-500 text-xs font-bold px-4 py-1.5 rounded-full border border-amber-500/20">
-            <ShieldAlert className="w-4 h-4" />
-            Rockies Rules & Advisory Engine
+    <div className="min-h-screen bg-[#080808] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 font-sans">
+      
+      {/* Page Header */}
+      <header className="bg-[#111111] text-[#F2EDE4] rounded-2xl sm:rounded-3xl p-5 sm:p-10 shadow-nexora border border-[#C49A10]/20 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+        <div className="relative z-10 flex flex-col gap-5">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-500 text-xs font-bold px-4 py-1.5 rounded-full border border-amber-500/20">
+              <ShieldAlert className="w-4 h-4" aria-hidden="true" />
+              Rockies Rules & Advisory Engine
+            </div>
+            <h1 className="text-2xl xs:text-3xl sm:text-5xl font-extrabold font-serif leading-tight">
+              Canadian Rockies{" "}
+              <span className="text-gradient-gold font-light italic">Park Rules & Advisories</span>
+            </h1>
+            <p className="text-sm text-[#ADA89F] leading-relaxed font-light max-w-2xl">
+              Verified, real-time guidance on Parks Canada passes, Moraine Lake shuttle restrictions, bear safety, Kananaskis passes, and seasonal road closures.
+            </p>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold font-serif leading-tight">
-            Canadian Rockies <br/>
-            <span className="text-gradient-gold font-light italic">Park Rules & Advisories</span>
-          </h1>
-          <p className="text-sm text-nexora-cream-muted leading-relaxed font-light">
-            Verified, real-time guidance on Parks Canada passes, Moraine Lake shuttle restrictions, bear safety, Kananaskis passes, and seasonal road closures.
-          </p>
-        </div>
 
-        <div className="shrink-0 relative z-10 w-full md:w-auto">
-          <button 
+          <button
             onClick={generateSummary}
-            disabled={isGeneratingAI}
-            className="w-full md:w-auto bg-nexora-gold hover:bg-nexora-gold-bright text-nexora-dark font-extrabold px-6 py-4 rounded-2xl shadow-gold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isGeneratingAI || !!aiSummary}
+            className="btn-nexora-fill-full sm:w-auto sm:self-start"
+            aria-busy={isGeneratingAI}
+            aria-label={isGeneratingAI ? "Generating AI summary..." : "Ask AI to summarize current risks"}
           >
-            {isGeneratingAI ? (
-              <Sparkles className="w-5 h-5 animate-spin" />
-            ) : (
-              <Sparkles className="w-5 h-5" />
-            )}
+            {isGeneratingAI
+              ? <Sparkles className="w-5 h-5 animate-spin" aria-hidden="true" />
+              : <Sparkles className="w-5 h-5" aria-hidden="true" />
+            }
             {isGeneratingAI ? "Analyzing Threats..." : "Ask AI to Summarize Risks"}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* AI Summary Banner */}
+      {/* AI Summary */}
+      {isGeneratingAI && !aiSummary && (
+        <div aria-live="polite" className="bg-[#111111] border border-[#C49A10]/20 rounded-2xl p-6 space-y-3 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <Sparkles className="w-5 h-5 text-[#C49A10] animate-pulse" aria-hidden="true" />
+            <p className="text-sm text-[#ADA89F] font-mono">Analyzing park advisories with AI…</p>
+          </div>
+          <div className="space-y-2">
+            <div className="skeleton h-4 w-3/4 rounded" />
+            <div className="skeleton h-4 w-full rounded" />
+            <div className="skeleton h-4 w-5/6 rounded" />
+          </div>
+        </div>
+      )}
+
+      {aiError && (
+        <div role="alert" aria-live="assertive" className="bg-rose-950/30 border border-rose-500/30 rounded-2xl p-5 text-rose-300 text-sm space-y-2">
+          <p className="font-semibold">Could not generate summary</p>
+          <p>{aiError}</p>
+          <button onClick={() => { setAiError(null); generateSummary(); }} className="text-rose-300 underline text-sm">
+            Try again
+          </button>
+        </div>
+      )}
+
       {aiSummary && (
-        <div className="bg-nexora-surface border border-nexora-gold/40 rounded-3xl p-6 md:p-8 shadow-gold animate-fade-in relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-400 via-transparent to-transparent pointer-events-none" />
+        <div aria-live="polite" className="bg-[#111111] border border-[#C49A10]/35 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-gold animate-fade-in relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_#C49A10,transparent_60%)] pointer-events-none" aria-hidden="true" />
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-nexora-gold" />
-              <h2 className="text-2xl font-serif text-nexora-cream">{aiSummary.title}</h2>
+              <Sparkles className="w-5 h-5 text-[#C49A10]" aria-hidden="true" />
+              <h2 className="text-xl sm:text-2xl font-serif text-[#F2EDE4]">{aiSummary.title}</h2>
             </div>
-            <ul className="space-y-3">
+            <ul className="space-y-3" role="list">
               {aiSummary.bullets?.map((bullet: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-3 text-sm text-nexora-cream-muted">
-                  <span className="w-1.5 h-1.5 rounded-full bg-nexora-gold shrink-0 mt-2" />
+                <li key={idx} className="flex items-start gap-3 text-sm text-[#ADA89F]">
+                  <CheckCircle2 className="w-4 h-4 text-[#C49A10] shrink-0 mt-0.5" aria-hidden="true" />
                   <span className="leading-relaxed">{bullet}</span>
                 </li>
               ))}
@@ -93,95 +154,98 @@ export default function AdvisoriesPage() {
       )}
 
       {/* Filter Controls */}
-      <div className="bg-nexora-card rounded-2xl p-4 border border-nexora-border shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-          <Filter className="w-4 h-4 text-nexora-cream-muted shrink-0" />
-          <span className="text-xs font-bold text-nexora-cream-muted shrink-0 uppercase tracking-widest">Filter:</span>
-          {["all", "critical", "warning", "info"].map((sev) => (
+      <div className="bg-[#111111] rounded-2xl p-4 border border-[#C49A10]/15 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter advisories by severity">
+          <span className="text-xs font-bold text-[#ADA89F] uppercase tracking-widest shrink-0">Filter:</span>
+          {(["all", "critical", "warning", "info"] as const).map((sev) => (
             <button
               key={sev}
               onClick={() => setFilterSeverity(sev)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all shrink-0 ${
+              aria-pressed={filterSeverity === sev}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold capitalize transition-all min-h-[40px] ${
                 filterSeverity === sev
-                  ? "bg-nexora-surface text-nexora-cream border border-nexora-gold/50 shadow-sm"
-                  : "bg-transparent text-nexora-cream-muted border border-transparent hover:text-nexora-cream"
+                  ? "bg-[#1A1A1A] text-[#F2EDE4] border border-[#C49A10]/40 shadow-sm"
+                  : "bg-transparent text-[#ADA89F] border border-transparent hover:text-[#F2EDE4] hover:bg-[#1A1A1A]"
               }`}
             >
-              {sev}
+              {sev === "all" ? "All" : sev.charAt(0).toUpperCase() + sev.slice(1)}
             </button>
           ))}
         </div>
-        <span className="text-xs text-nexora-gold font-mono shrink-0">
-          {filteredAdvisories.length} Active Directives
+        <span className="text-xs text-[#C49A10] font-mono" aria-live="polite">
+          {filteredAdvisories.length} Active Directive{filteredAdvisories.length !== 1 ? "s" : ""}
         </span>
       </div>
 
-      {/* Advisories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Advisory Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5" role="list" aria-label="Park advisories">
         {filteredAdvisories.map((adv) => {
-          // Determine colors based on severity
-          let borderColor = "border-nexora-border";
-          let bgGlow = "";
-          let badgeStyle = "bg-blue-500/10 text-blue-400 border-blue-500/20";
-          
-          if (adv.severity === "critical") {
-            borderColor = "border-rose-500/30";
-            bgGlow = "bg-rose-500/5";
-            badgeStyle = "bg-rose-500/10 text-rose-400 border-rose-500/20";
-          } else if (adv.severity === "warning") {
-            borderColor = "border-amber-500/30";
-            bgGlow = "bg-amber-500/5";
-            badgeStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-          }
-
+          const config = SEVERITY_CONFIG[adv.severity as Severity] || SEVERITY_CONFIG.info;
+          const SeverityIcon = config.icon;
           return (
-            <div
+            <article
               key={adv.id}
-              className={`bg-nexora-card rounded-3xl p-6 sm:p-8 border shadow-nexora space-y-6 flex flex-col justify-between transition-all hover:-translate-y-1 ${borderColor} ${bgGlow}`}
+              role="listitem"
+              className={`bg-[#111111] rounded-2xl sm:rounded-3xl p-5 sm:p-8 border shadow-nexora space-y-5 flex flex-col justify-between transition-all hover:-translate-y-1 ${config.border} ${config.bg}`}
             >
               <div className="space-y-4">
-                {/* Badge & Destination */}
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-[10px] font-mono uppercase tracking-widest px-3 py-1.5 rounded-full border ${badgeStyle}`}>
-                    {adv.severity} • {adv.destination}
+                {/* Badge + Icon severity + date */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-full border font-bold ${config.badge}`}>
+                    <SeverityIcon className={`w-3.5 h-3.5 ${config.iconColor} shrink-0`} aria-hidden="true" />
+                    <span>{config.label}</span>
+                    <span aria-hidden="true">•</span>
+                    <span>{adv.destination}</span>
                   </span>
-
-                  <span className="text-[10px] font-mono text-nexora-cream-muted">
+                  <span className="text-xs font-mono text-[#5C5852] shrink-0">
                     Verified {adv.lastVerifiedDate}
                   </span>
                 </div>
 
-                <h3 className="text-xl sm:text-2xl font-serif text-nexora-cream leading-snug">
+                <h2 className="text-lg sm:text-2xl font-serif text-[#F2EDE4] leading-snug">
                   {adv.title}
-                </h3>
+                </h2>
 
-                <p className="text-sm text-nexora-cream-muted leading-relaxed">
-                  {adv.summary}
-                </p>
+                <p className="text-sm text-[#ADA89F] leading-relaxed">{adv.summary}</p>
 
-                {/* Affected Groups & Action */}
-                <div className="p-4 bg-nexora-surface rounded-2xl border border-nexora-border text-sm space-y-1">
-                  <span className="font-mono text-xs uppercase tracking-widest text-nexora-gold block mb-1">Required Action:</span>
-                  <span className="text-nexora-cream font-medium">{adv.callToAction}</span>
+                {/* Required Action */}
+                <div className="p-4 bg-[#080808] rounded-xl border border-[#1A1A1A] text-sm space-y-1">
+                  <span className="font-mono text-xs uppercase tracking-widest text-[#C49A10] block">
+                    Required Action:
+                  </span>
+                  <span className="text-[#F2EDE4] font-medium">{adv.callToAction}</span>
                 </div>
               </div>
 
-              {/* Official Source Link */}
-              <div className="pt-4 border-t border-nexora-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <span className="text-nexora-cream-muted font-mono uppercase">Source: {adv.officialSource}</span>
+              {/* Source link */}
+              <div className="pt-4 border-t border-[#1A1A1A] flex flex-wrap items-center justify-between gap-3 text-xs">
+                <span className="text-[#ADA89F] font-mono uppercase">Source: {adv.officialSource}</span>
                 <a
                   href={adv.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-nexora-gold hover:text-nexora-gold-bright font-bold flex items-center gap-1.5 transition-colors"
+                  className="text-[#C49A10] hover:text-[#E5B830] font-bold flex items-center gap-1.5 transition-colors min-h-[44px] py-2"
+                  aria-label={`View official directive for ${adv.title} (opens in new tab)`}
                 >
-                  Official Directive <ExternalLink className="w-3.5 h-3.5" />
+                  Official Directive
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                 </a>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
+
+      {filteredAdvisories.length === 0 && (
+        <div className="text-center py-16 space-y-4">
+          <CheckCircle2 className="w-12 h-12 text-[#C49A10] mx-auto" aria-hidden="true" />
+          <p className="text-[#F2EDE4] font-serif text-xl">No advisories for this filter</p>
+          <p className="text-sm text-[#ADA89F]">Try selecting a different severity level.</p>
+          <button onClick={() => setFilterSeverity("all")} className="btn-nexora-line text-xs mt-4">
+            Show All Advisories
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,6 +8,15 @@ const config: Config = {
   ],
   darkMode: "class",
   theme: {
+    screens: {
+      // xs starts at 320px for very small phones
+      xs: "320px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+    },
     extend: {
       colors: {
         nexora: {
@@ -32,6 +41,22 @@ const config: Config = {
       boxShadow: {
         nexora: "0 8px 32px 0 rgba(0, 0, 0, 0.8)",
         gold: "0 4px 20px 0 rgba(196, 154, 16, 0.25)",
+      },
+      height: {
+        // Dynamic viewport heights — critical for mobile browser chrome handling
+        "screen-dvh": "100dvh",
+        "screen-svh": "100svh",
+      },
+      minHeight: {
+        "screen-dvh": "100dvh",
+        "screen-svh": "100svh",
+      },
+      spacing: {
+        // Safe-area spacing tokens
+        "safe-top": "env(safe-area-inset-top, 0px)",
+        "safe-bottom": "env(safe-area-inset-bottom, 0px)",
+        "safe-left": "env(safe-area-inset-left, 0px)",
+        "safe-right": "env(safe-area-inset-right, 0px)",
       },
     },
   },

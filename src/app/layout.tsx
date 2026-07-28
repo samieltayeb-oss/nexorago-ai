@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { BRANDING } from "@/config/branding";
 
 export const metadata: Metadata = {
@@ -16,6 +17,18 @@ export const metadata: Metadata = {
     "Canadian Rockies budget stays",
     "Parks Canada pass guide",
   ],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Do NOT set maximumScale: 1 — never disable user zoom (accessibility requirement)
+  themeColor: "#080808",
+  viewportFit: "cover", // enables safe-area-inset support
 };
 
 export default function RootLayout({
@@ -33,10 +46,12 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-[#080808] text-[#F2EDE4] antialiased font-sans">
+      <body className="min-h-screen-dvh flex flex-col bg-[#080808] text-[#F2EDE4] antialiased font-sans">
         <Header />
         <main className="flex-grow">{children}</main>
         <Footer />
+        {/* Bottom nav is visible only on mobile (lg:hidden inside BottomNav) */}
+        <BottomNav />
       </body>
     </html>
   );

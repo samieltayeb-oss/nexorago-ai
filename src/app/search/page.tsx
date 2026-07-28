@@ -181,7 +181,7 @@ function SearchDashboardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-nexora-dark py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-nexora-dark py-6 sm:py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Top AI Summary Banner */}
       <div className="bg-nexora-card text-nexora-cream rounded-3xl p-6 sm:p-8 shadow-nexora border border-nexora-border relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -383,25 +383,23 @@ function SearchDashboardContent() {
             </div>
           ) : itinerary ? (
             <div className="space-y-8 relative z-10 animate-fade-in text-nexora-cream">
-              <div className="text-center space-y-4 mb-12">
+              <div className="text-center space-y-4 mb-8">
                 <div className="inline-flex items-center gap-2 bg-nexora-gold/20 text-nexora-gold text-xs font-bold px-4 py-1.5 rounded-full border border-nexora-gold/30">
                   <Sparkles className="w-4 h-4" />
                   Your Custom VIP Itinerary
                 </div>
-                <h2 className="text-3xl md:text-4xl font-serif font-light">{itinerary.summary}</h2>
-                <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-                  <p className="text-nexora-cream-muted font-mono text-xs uppercase tracking-widest">
-                    Optimal Base: <strong className="text-nexora-gold">{itinerary.bestBase}</strong>
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <PdfDownloadButton itinerary={itinerary} />
-                    <button 
-                      onClick={() => setIsShareModalOpen(true)}
-                      className="btn-nexora-outline py-3 px-6 rounded-xl flex items-center gap-2 font-bold transition-transform hover:scale-105"
-                    >
-                      <Sparkles className="w-4 h-4" /> Share Trip
-                    </button>
-                  </div>
+                <h2 className="text-xl sm:text-3xl md:text-4xl font-serif font-light break-words">{itinerary.summary}</h2>
+                <p className="text-nexora-cream-muted font-mono text-xs uppercase tracking-widest">
+                  Optimal Base: <strong className="text-nexora-gold">{itinerary.bestBase}</strong>
+                </p>
+                <div className="flex flex-col xs:flex-row items-stretch xs:items-center justify-center gap-3 pt-2">
+                  <PdfDownloadButton itinerary={itinerary} />
+                  <button 
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="btn-nexora-outline flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" aria-hidden="true" /> Share Trip
+                  </button>
                 </div>
               </div>
               
@@ -424,18 +422,18 @@ function SearchDashboardContent() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
                 <div className="p-4 bg-nexora-surface rounded-2xl border border-nexora-border text-center shadow-nexora">
                   <span className="block text-xs font-mono text-nexora-cream-muted uppercase tracking-wider mb-1">Stays</span>
-                  <strong className="text-xl text-emerald-400">${itinerary.estimatedBudget?.accommodation}</strong>
+                  <strong className="text-lg sm:text-xl text-emerald-400">${itinerary.estimatedBudget?.accommodation}</strong>
                 </div>
                 <div className="p-4 bg-nexora-surface rounded-2xl border border-nexora-border text-center shadow-nexora">
                   <span className="block text-xs font-mono text-nexora-cream-muted uppercase tracking-wider mb-1">Activities</span>
-                  <strong className="text-xl text-emerald-400">${itinerary.estimatedBudget?.activities}</strong>
+                  <strong className="text-lg sm:text-xl text-emerald-400">${itinerary.estimatedBudget?.activities}</strong>
                 </div>
-                <div className="p-4 bg-nexora-surface rounded-2xl border border-nexora-border text-center shadow-nexora">
+                <div className="col-span-2 sm:col-span-1 p-4 bg-nexora-surface rounded-2xl border border-nexora-border text-center shadow-nexora">
                   <span className="block text-xs font-mono text-nexora-cream-muted uppercase tracking-wider mb-1">Food</span>
-                  <strong className="text-xl text-emerald-400">${itinerary.estimatedBudget?.food}</strong>
+                  <strong className="text-lg sm:text-xl text-emerald-400">${itinerary.estimatedBudget?.food}</strong>
                 </div>
               </div>
 
@@ -470,7 +468,7 @@ function SearchDashboardContent() {
                         </div>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-5 sm:gap-6">
                       <div className="space-y-4">
                         <span className="text-xs font-bold text-nexora-cream-muted uppercase tracking-wider flex items-center gap-2">Morning</span>
                         <div className="space-y-3">
@@ -563,8 +561,11 @@ function SearchDashboardContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-12 text-slate-600 font-bold text-sm">
-        Loading RockyGo AI Search Dashboard...
+      <div className="min-h-screen bg-[#080808] flex items-center justify-center p-12">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-full border-4 border-[#1A1A1A] border-t-[#C49A10] animate-spin mx-auto" />
+          <p className="text-sm font-mono text-[#ADA89F] uppercase tracking-widest">Loading NexoraGo AI...</p>
+        </div>
       </div>
     }>
       <SearchDashboardContent />

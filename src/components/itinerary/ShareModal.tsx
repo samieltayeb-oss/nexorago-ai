@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Copy, Share2, MessageCircle, Mail, Loader2, ShieldOff, CheckCircle2 } from "lucide-react";
 
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
-  tripData: any; // The full trip context from the search dashboard
+  tripData: any;
 }
 
 export function ShareModal({ isOpen, onClose, tripData }: ShareModalProps) {
@@ -16,8 +16,8 @@ export function ShareModal({ isOpen, onClose, tripData }: ShareModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Generate the share link if not already generated
   const generateShare = async () => {
     if (shareUrl) return;
     setIsLoading(true);
@@ -29,38 +29,53 @@ export function ShareModal({ isOpen, onClose, tripData }: ShareModalProps) {
         body: JSON.stringify({
           title: tripData.itinerary?.summary || "Canadian Rockies Trip",
           destinationSummary: "Personalized Banff & Canmore Itinerary",
-          checkIn: "2026-08-10", // Fallbacks for demo
+          checkIn: "2026-08-10",
           checkOut: "2026-08-13",
           adults: 2,
           children: 2,
           tripData: {},
           itineraryData: tripData.itinerary || {},
           budgetData: tripData.budget || {},
-          hotelData: tripData.hotel || {}
-        })
+          hotelData: tripData.hotel || {},
+        }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to generate link");
-
       setTripId(data.tripId);
-      
-      // Construct full URL (use window.location.origin as base for client-side)
       setShareUrl(`${window.location.origin}/trip/${data.shareId}`);
-      setIsDisabled(false);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Automatically trigger generation when opened if not yet generated
-  React.useEffect(() => {
+  // Auto-generate on open
+  useEffect(() => {
     if (isOpen && !shareUrl && !isLoading) {
       generateShare();
     }
   }, [isOpen]);
+
+  // Lock scroll
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("scroll-locked");
+      setTimeout(() => closeButtonRef.current?.focus(), 100);
+    } else {
+      document.body.classList.remove("scroll-locked");
+    }
+    return () => document.body.classList.remove("scroll-locked");
+  }, [isOpen]);
+
+  // Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleCopy = async () => {
     if (!shareUrl) return;
@@ -68,8 +83,8 @@ export function ShareModal({ isOpen, onClose, tripData }: ShareModalProps) {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy", err);
+    } catch {
+      // fallback: select the input text
     }
   };
 
@@ -79,12 +94,12 @@ export function ShareModal({ isOpen, onClose, tripData }: ShareModalProps) {
       try {
         await navigator.share({
           title: "Our Canadian Rockies Trip",
-          text: "Here's our customized Canadian Rockies trip plan from NexoraGo AI.",
-          url: shareUrl
+          text: "Here's our customized trip plan from NexoraGo AI.",
+          url: shareUrl,
         });
-      } catch (err) {
-        console.error("Native share cancelled or failed");
-      }
+      } catch {}
+    } else {
+      handleCopy();
     }
   };
 
@@ -95,108 +110,171 @@ export function ShareModal({ isOpen, onClose, tripData }: ShareModalProps) {
       const res = await fetch(`/api/trips/${tripId}/share`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: false })
+        body: JSON.stringify({ isActive: false }),
       });
-      if (res.ok) {
-        setIsDisabled(true);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
+      if (res.ok) setIsDisabled(true);
+    } catch {}
+    finally { setIsLoading(false); }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-[#080808]/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#111111] border border-[#C49A10]/30 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden relative text-[#F2EDE4]">
-        
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-50 bg-black/75 animate-backdrop"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Sheet — slides up on mobile, centered modal on desktop */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Share trip"
+        className={[
+          "fixed z-[var(--z-modal)] bg-[#111111] border border-[#C49A10]/25 text-[#F2EDE4] w-full",
+          // Mobile: full-width bottom sheet
+          "bottom-0 left-0 right-0 rounded-t-3xl animate-slide-up-sheet",
+          // Desktop: centered modal
+          "sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:rounded-3xl sm:animate-none",
+        ].join(" ")}
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
+      >
+        {/* Drag handle (mobile only) */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden" aria-hidden="true">
+          <div className="w-10 h-1 rounded-full bg-[#333]" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#1A1A1A]">
-          <h3 className="text-xl font-serif text-[#F2EDE4]">Share Trip</h3>
-          <button onClick={onClose} className="p-2 bg-[#1A1A1A] hover:bg-[#333333] rounded-full transition-colors">
-            <X className="w-4 h-4 text-[#ADA89F]" />
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1A1A1A]">
+          <h2 className="text-lg font-serif text-[#F2EDE4]">Share Trip</h2>
+          <button
+            ref={closeButtonRef}
+            onClick={onClose}
+            className="touch-target rounded-full bg-[#1A1A1A] hover:bg-[#333] transition-colors"
+            aria-label="Close share dialog"
+          >
+            <X className="w-4 h-4 text-[#ADA89F]" aria-hidden="true" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="px-6 py-5 space-y-5">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-10 space-y-4">
-              <Loader2 className="w-8 h-8 text-[#C49A10] animate-spin" />
-              <p className="text-sm font-mono text-[#ADA89F] uppercase">Securing Trip Link...</p>
+              <Loader2 className="w-8 h-8 text-[#C49A10] animate-spin" aria-hidden="true" />
+              <p className="text-sm font-mono text-[#ADA89F] uppercase tracking-widest" aria-live="polite">
+                Securing Trip Link...
+              </p>
             </div>
           ) : error ? (
-            <div className="text-center py-10 text-rose-500 text-sm">{error}</div>
+            <div className="text-center py-8 space-y-3">
+              <p className="text-rose-400 text-sm" role="alert">{error}</p>
+              <button onClick={generateShare} className="btn-nexora-line text-xs">
+                Try Again
+              </button>
+            </div>
           ) : isDisabled ? (
             <div className="text-center py-10 space-y-4">
-              <ShieldOff className="w-12 h-12 text-rose-500 mx-auto" />
+              <ShieldOff className="w-12 h-12 text-rose-500 mx-auto" aria-hidden="true" />
               <p className="text-[#F2EDE4] font-bold">Link Disabled</p>
-              <p className="text-sm text-[#ADA89F]">This link has been deactivated and can no longer be viewed by anyone.</p>
+              <p className="text-sm text-[#ADA89F]">
+                This link has been deactivated and can no longer be accessed.
+              </p>
             </div>
           ) : (
             <>
-              {/* URL Display & Copy */}
+              {/* Link display */}
               <div className="space-y-2">
-                <label className="text-xs font-mono text-[#ADA89F] uppercase">Public Link</label>
+                <label className="text-xs font-mono text-[#ADA89F] uppercase tracking-wide" htmlFor="share-url">
+                  Public Link
+                </label>
                 <div className="flex items-center gap-2 bg-[#080808] border border-[#1A1A1A] rounded-xl p-2">
-                  <input 
-                    type="text" 
-                    readOnly 
-                    value={shareUrl || ""} 
-                    className="flex-grow bg-transparent border-none text-sm text-[#F2EDE4] focus:ring-0 outline-none px-2"
+                  <input
+                    id="share-url"
+                    type="url"
+                    readOnly
+                    value={shareUrl || ""}
+                    className="flex-grow bg-transparent border-none text-sm text-[#F2EDE4] focus:ring-0 outline-none px-2 min-w-0"
+                    style={{ fontSize: "14px" }}
+                    onFocus={(e) => e.target.select()}
+                    aria-label="Shareable trip URL"
                   />
-                  <button 
+                  <button
                     onClick={handleCopy}
-                    className="bg-[#1A1A1A] hover:bg-[#333333] p-2 rounded-lg transition-colors flex shrink-0 text-[#C49A10]"
-                    aria-label="Copy link"
+                    className="shrink-0 bg-[#1A1A1A] hover:bg-[#333] p-2.5 rounded-lg transition-colors touch-target"
+                    aria-label={copied ? "Link copied!" : "Copy link"}
                   >
-                    {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                    {copied
+                      ? <CheckCircle2 className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                      : <Copy className="w-4 h-4 text-[#C49A10]" aria-hidden="true" />
+                    }
                   </button>
                 </div>
+                {copied && (
+                  <p className="text-xs text-emerald-400 font-mono" role="status" aria-live="polite">
+                    ✓ Copied to clipboard
+                  </p>
+                )}
               </div>
 
-              {/* Quick Actions */}
+              {/* Primary actions */}
+              <button
+                onClick={handleCopy}
+                className="btn-nexora-fill-full"
+                aria-label="Copy share link"
+              >
+                <Copy className="w-4 h-4" aria-hidden="true" />
+                Copy Link
+              </button>
+
+              {/* Secondary share actions */}
               <div className="grid grid-cols-3 gap-3">
-                <button 
+                <button
                   onClick={handleNativeShare}
-                  className="flex flex-col items-center justify-center gap-2 bg-[#080808] hover:bg-[#1A1A1A] border border-[#1A1A1A] p-3 rounded-xl transition-colors"
+                  className="flex flex-col items-center justify-center gap-2 bg-[#080808] hover:bg-[#1A1A1A] border border-[#1A1A1A] p-4 rounded-2xl transition-colors min-h-[72px]"
+                  aria-label="Share via device"
                 >
-                  <Share2 className="w-5 h-5 text-[#C49A10]" />
+                  <Share2 className="w-5 h-5 text-[#C49A10]" aria-hidden="true" />
                   <span className="text-[10px] font-mono uppercase text-[#ADA89F]">Share</span>
                 </button>
-                <a 
+                <a
                   href={`https://wa.me/?text=Here's our Canadian Rockies trip plan from NexoraGo AI: ${shareUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center gap-2 bg-[#080808] hover:bg-[#1A1A1A] border border-[#1A1A1A] p-3 rounded-xl transition-colors"
+                  className="flex flex-col items-center justify-center gap-2 bg-[#080808] hover:bg-[#1A1A1A] border border-[#1A1A1A] p-4 rounded-2xl transition-colors min-h-[72px]"
+                  aria-label="Share on WhatsApp"
                 >
-                  <MessageCircle className="w-5 h-5 text-emerald-400" />
+                  <MessageCircle className="w-5 h-5 text-emerald-400" aria-hidden="true" />
                   <span className="text-[10px] font-mono uppercase text-[#ADA89F]">WhatsApp</span>
                 </a>
-                <a 
-                  href={`mailto:?subject=Our Canadian Rockies Trip&body=Here's our customized Canadian Rockies trip plan from NexoraGo AI:%0D%0A%0D%0A${shareUrl}`}
-                  className="flex flex-col items-center justify-center gap-2 bg-[#080808] hover:bg-[#1A1A1A] border border-[#1A1A1A] p-3 rounded-xl transition-colors"
+                <a
+                  href={`mailto:?subject=Our Canadian Rockies Trip&body=Here's our trip plan from NexoraGo AI:%0D%0A%0D%0A${shareUrl}`}
+                  className="flex flex-col items-center justify-center gap-2 bg-[#080808] hover:bg-[#1A1A1A] border border-[#1A1A1A] p-4 rounded-2xl transition-colors min-h-[72px]"
+                  aria-label="Share via email"
                 >
-                  <Mail className="w-5 h-5 text-[#C49A10]" />
+                  <Mail className="w-5 h-5 text-[#C49A10]" aria-hidden="true" />
                   <span className="text-[10px] font-mono uppercase text-[#ADA89F]">Email</span>
                 </a>
               </div>
 
-              <div className="pt-4 border-t border-[#1A1A1A] flex justify-end">
-                <button 
+              {/* Danger zone */}
+              <div className="pt-3 border-t border-[#1A1A1A] flex justify-end">
+                <button
                   onClick={handleDisable}
-                  className="text-xs text-rose-500 hover:text-rose-400 flex items-center gap-1.5"
+                  className="text-xs text-rose-500 hover:text-rose-400 flex items-center gap-1.5 py-2 px-3 rounded-lg hover:bg-rose-500/10 transition-colors"
+                  aria-label="Disable share link so nobody can view it"
                 >
-                  <ShieldOff className="w-3.5 h-3.5" /> Disable Link
+                  <ShieldOff className="w-3.5 h-3.5" aria-hidden="true" />
+                  Disable Link
                 </button>
               </div>
             </>
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

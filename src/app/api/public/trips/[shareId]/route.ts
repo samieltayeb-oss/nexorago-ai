@@ -68,15 +68,18 @@ export async function GET(
       return NextResponse.json({ error: "Trip data could not be retrieved" }, { status: 500 });
     }
 
-    // 4. Update view count in background (don't await to block response)
-    supabase.rpc('increment_view_count', { row_id: shareId }).catch(() => {
-      // fallback if RPC doesn't exist
-      supabase
-        .from("trip_shares")
-        .update({ last_viewed_at: new Date().toISOString() })
-        .eq("share_id", shareId)
-        .then();
-    });
+    // 4. Update view count in background (fire-and-forget, don't block response)
+    void (async () => {
+      try {
+        await supabase.rpc('increment_view_count', { row_id: shareId });
+      } catch {
+        // fallback: update last_viewed_at if RPC doesn't exist
+        await supabase
+          .from("trip_shares")
+          .update({ last_viewed_at: new Date().toISOString() })
+          .eq("share_id", shareId);
+      }
+    })();
 
     // 5. Return public projection
     return NextResponse.json({
